@@ -11,6 +11,7 @@ import { products } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { Product, CartItem } from '@/types/product';
 import { toast } from 'sonner';
+import BottomNavigation from '@/components/BottomNavigation';
 
 export default function Menu() {
   const navigate = useNavigate();
@@ -42,7 +43,8 @@ export default function Menu() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <>
+      <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-10 glass-effect border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
@@ -150,5 +152,7 @@ export default function Menu() {
         </DialogContent>
       </Dialog>
     </div>
+    <BottomNavigation />
+  </>
   );
 }
