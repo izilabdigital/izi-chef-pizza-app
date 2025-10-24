@@ -77,14 +77,23 @@ export default function Menu() {
                         <span className="text-primary font-bold text-lg">
                           R$ {product.price.toFixed(2)}
                         </span>
-                        <Button 
-                          size="sm" 
-                          variant="gold"
-                          onClick={() => setSelectedProduct(product)}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Adicionar
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => navigate('/customize-pizza', { state: { product } })}
+                          >
+                            Personalizar
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="gold"
+                            onClick={() => setSelectedProduct(product)}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Adicionar
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
