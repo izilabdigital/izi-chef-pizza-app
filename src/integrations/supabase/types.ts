@@ -14,13 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cupons: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          minimo_pedido: number | null
+          tipo: string
+          usos_atuais: number
+          usos_maximos: number | null
+          validade: string | null
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          minimo_pedido?: number | null
+          tipo: string
+          usos_atuais?: number
+          usos_maximos?: number | null
+          validade?: string | null
+          valor: number
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          minimo_pedido?: number | null
+          tipo?: string
+          usos_atuais?: number
+          usos_maximos?: number | null
+          validade?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
+      pedidos: {
+        Row: {
+          bairro: string
+          cep: string
+          complemento: string | null
+          created_at: string
+          cupom: string | null
+          desconto: number | null
+          estado: string
+          forma_pagamento: string
+          id: string
+          itens: Json
+          nome: string
+          numero: string
+          numero_pedido: string
+          rua: string
+          status: string
+          subtotal: number
+          taxa_entrega: number
+          telefone: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          bairro: string
+          cep: string
+          complemento?: string | null
+          created_at?: string
+          cupom?: string | null
+          desconto?: number | null
+          estado: string
+          forma_pagamento: string
+          id?: string
+          itens: Json
+          nome: string
+          numero: string
+          numero_pedido: string
+          rua: string
+          status?: string
+          subtotal: number
+          taxa_entrega: number
+          telefone: string
+          total: number
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string
+          cep?: string
+          complemento?: string | null
+          created_at?: string
+          cupom?: string | null
+          desconto?: number | null
+          estado?: string
+          forma_pagamento?: string
+          id?: string
+          itens?: Json
+          nome?: string
+          numero?: string
+          numero_pedido?: string
+          rua?: string
+          status?: string
+          subtotal?: number
+          taxa_entrega?: number
+          telefone?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_order_number: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
