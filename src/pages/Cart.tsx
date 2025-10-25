@@ -123,7 +123,7 @@ export default function Cart() {
       // Salvar pedido no Supabase
       const { error: insertError } = await supabase
         .from('pedidos')
-        .insert({
+        .insert([{
           numero_pedido: orderNumber,
           nome: customerName,
           telefone: customerPhone,
@@ -136,17 +136,17 @@ export default function Cart() {
           forma_pagamento: paymentMethod,
           cupom: cupomAplicado ? cupom.toUpperCase() : null,
           desconto,
-          itens: items,
+          itens: items as any,
           subtotal,
           taxa_entrega: deliveryFee,
           total: finalTotal,
           status: 'pendente'
-        });
+        }]);
 
       if (insertError) throw insertError;
 
       // Atualizar uso do cupom se aplicado
-      if (cupomAplicado) {
+      if (cupomAplicado && cupom) {
         await supabase.rpc('increment_cupom_uso', { cupom_code: cupom.toUpperCase() });
       }
 

@@ -131,6 +131,7 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
+      increment_cupom_uso: { Args: { cupom_code: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
