@@ -234,7 +234,7 @@ export default function Cart() {
       const encodedText = encodeURIComponent(orderText);
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedText}`;
       
-      window.open(whatsappUrl, '_blank');
+      //window.open(whatsappUrl, '_blank');
       clearCart();
       toast.success('Pedido enviado! Aguarde o contato.');
       navigate('/order-tracking', { state: { orderNumber } });
