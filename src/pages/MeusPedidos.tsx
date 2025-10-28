@@ -37,7 +37,7 @@ const statusLabels: Record<string, string> = {
 
 export default function MeusPedidos() {
   const navigate = useNavigate();
-  const { phone, logout, isAuthenticated } = useAuth();
+  const { user, profile, logout, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,16 +48,16 @@ export default function MeusPedidos() {
       return;
     }
     loadPedidos();
-  }, [phone, isAuthenticated]);
+  }, [user, isAuthenticated]);
 
   const loadPedidos = async () => {
-    if (!phone) return;
+    if (!user) return;
 
     try {
       const { data, error } = await supabase
         .from('pedidos')
         .select('*')
-        .eq('telefone', phone)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -133,7 +133,7 @@ export default function MeusPedidos() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-primary">Meus Pedidos</h1>
-                <p className="text-sm text-muted-foreground">{phone}</p>
+                <p className="text-sm text-muted-foreground">{profile?.nome || profile?.telefone}</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout}>

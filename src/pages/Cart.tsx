@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCEP } from '@/hooks/useCEP';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,6 +15,7 @@ import { toast } from 'sonner';
 export default function Cart() {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { user, profile } = useAuth();
   const { searchCEP, loading: cepLoading } = useCEP();
   
   const [customerName, setCustomerName] = useState('');
@@ -120,34 +122,92 @@ export default function Cart() {
       
       const orderNumber = orderData;
 
+      // Preparar dados do pedido
+      const pedidoData = {
+        numero_pedido: orderNumber,
+        nome: customerName,
+        telefone: customerPhone,
+        cep,
+        estado,
+        bairro,
+        rua,
+        numero,
+        complemento,
+        forma_pagamento: paymentMethod,
+        cupom: cupomAplicado ? cupom.toUpperCase() : null,
+        desconto,
+        itens: items as any,
+        subtotal,
+        taxa_entrega: deliveryFee,
+        total: finalTotal,
+        status: 'pendente',
+        user_id: user?.id || null
+      };
+
       // Salvar pedido no Supabase
-      const { error: insertError } = await supabase
+      const { data: insertedPedido, error: insertError } = await supabase
         .from('pedidos')
-        .insert([{
-          numero_pedido: orderNumber,
-          nome: customerName,
-          telefone: customerPhone,
-          cep,
-          estado,
-          bairro,
-          rua,
-          numero,
-          complemento,
-          forma_pagamento: paymentMethod,
-          cupom: cupomAplicado ? cupom.toUpperCase() : null,
-          desconto,
-          itens: items as any,
-          subtotal,
-          taxa_entrega: deliveryFee,
-          total: finalTotal,
-          status: 'pendente'
-        }]);
+        .insert([pedidoData])
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
       // Atualizar uso do cupom se aplicado
       if (cupomAplicado && cupom) {
         await supabase.rpc('increment_cupom_uso', { cupom_code: cupom.toUpperCase() });
+      }
+
+      // Enviar pedido para o webhook
+      try {
+        const webhookData = {
+          id: insertedPedido.id,
+          numero_pedido: orderNumber,
+          cliente: {
+            nome: customerName,
+            telefone: customerPhone
+          },
+          endereco: {
+            cep,
+            estado,
+            bairro,
+            rua,
+            numero,
+            complemento
+          },
+          itens: items.map(item => ({
+            id: item.id,
+            nome: item.name,
+            tamanho: item.size,
+            quantidade: item.quantity,
+            preco_unitario: item.price,
+            preco_total: item.price * item.quantity,
+            observacoes: item.observations || null
+          })),
+          pagamento: {
+            forma: paymentMethod,
+            cupom: cupomAplicado ? cupom.toUpperCase() : null,
+            desconto
+          },
+          valores: {
+            subtotal,
+            taxa_entrega: deliveryFee,
+            total: finalTotal
+          },
+          status: 'pendente',
+          criado_em: new Date().toISOString()
+        };
+
+        await fetch('https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(webhookData)
+        });
+      } catch (webhookError) {
+        console.error('Erro ao enviar para webhook:', webhookError);
+        // Não bloquear o pedido se o webhook falhar
       }
 
       // Preparar mensagem WhatsApp
