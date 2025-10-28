@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      cliente: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string | null
+          telefone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+          telefone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string | null
+          telefone?: string
+        }
+        Relationships: []
+      }
       cupons: {
         Row: {
           ativo: boolean
