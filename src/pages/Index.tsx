@@ -20,9 +20,6 @@ const Index = () => {
           </div>
           <div className="relative h-full flex flex-col items-center justify-center text-center px-4 z-10">
             <img src={logoizichefe} alt="Logo" className="mx-auto w-24" />
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 animate-fade-in-up">
-              Izi Chefee
-            </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-8 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               A Qualidade de um Chefe, a Facilidade do Izi
             </p>
