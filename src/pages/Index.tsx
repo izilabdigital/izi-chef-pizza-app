@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Pizza } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroPizza from "@/assets/hero-pizza.jpg";
+import logoizichefe from "@/assets/logoizichefe.png";
 import BottomNavigation from "@/components/BottomNavigation";
 
 const Index = () => {
@@ -18,6 +19,7 @@ const Index = () => {
             <div className="absolute inset-0 gradient-overlay" />
           </div>
           <div className="relative h-full flex flex-col items-center justify-center text-center px-4 z-10">
+            <img src={logoizichefe} alt="Logo" className="mx-auto" />
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 animate-fade-in-up">
               Izi Chefee
             </h1>
