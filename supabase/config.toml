@@ -1,1 +1,4 @@
 project_id = "dufbtyqoxhhpomgirrsv"
+
+[functions.notify-order-status]
+verify_jwt = false
