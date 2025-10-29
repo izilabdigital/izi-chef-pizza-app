@@ -54,7 +54,7 @@ export default function Menu() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container sticky top-0 z-10 mx-auto px-4 py-6">
         <Tabs defaultValue="classicas" className="w-full">
           <TabsList className="w-full grid grid-cols-3 mb-6">
             <TabsTrigger value="classicas">Clássicas</TabsTrigger>
