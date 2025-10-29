@@ -20,7 +20,7 @@ export default function BottomNavigation() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-border"style="background-color: white;">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-4 gap-2 py-2">
           {navItems.map((item) => {
