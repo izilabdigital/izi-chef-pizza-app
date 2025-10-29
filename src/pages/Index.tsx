@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Pizza } from "lucide-react";
+import { TicketPercent } from 'lucide-react';
+import { PackageOpen } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import heroPizza from "@/assets/hero-pizza.jpg";
 import logoizichefe from "@/assets/logoizichefe.png";
@@ -19,7 +21,7 @@ const Index = () => {
             <div className="absolute inset-0 gradient-overlay" />
           </div>
           <div className="relative h-full flex flex-col items-center justify-center text-center px-4 z-10">
-            <img src={logoizichefe} alt="Logo" className="mx-auto w-24" />
+            <img src={logoizichefe} alt="Logo" className="mx-auto w-24 animate-fade-in-up" style={{ animationDelay: "0.1s" }}/>
             <p className="text-xl md:text-2xl text-white/90 mb-8 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               A Qualidade de um Chefe, a Facilidade do Izi
             </p>
@@ -49,14 +51,14 @@ const Index = () => {
               className="p-4 hover-lift text-center cursor-pointer"
               onClick={() => navigate('/menu')}
             >
-              <Pizza className="w-8 h-8 mx-auto mb-2 text-primary" />
+              <TicketPercent className="w-8 h-8 mx-auto mb-2 text-primary" />
               <p className="text-sm font-semibold">Promoções</p>
             </Card>
             <Card 
               className="p-4 hover-lift text-center cursor-pointer"
               onClick={() => navigate('/order-tracking')}
             >
-              <Pizza className="w-8 h-8 mx-auto mb-2 text-primary" />
+              <PackageOpen className="w-8 h-8 mx-auto mb-2 text-primary" />
               <p className="text-sm font-semibold">Pedidos</p>
             </Card>
           </div>
