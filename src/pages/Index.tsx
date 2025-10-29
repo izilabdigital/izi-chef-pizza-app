@@ -19,7 +19,7 @@ const Index = () => {
             <div className="absolute inset-0 gradient-overlay" />
           </div>
           <div className="relative h-full flex flex-col items-center justify-center text-center px-4 z-10">
-            <img src={logoizichefe} alt="Logo" className="mx-auto" style="width:100px" />
+            <img src={logoizichefe} alt="Logo" className="mx-auto w-24" />
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 animate-fade-in-up">
               Izi Chefee
             </h1>
