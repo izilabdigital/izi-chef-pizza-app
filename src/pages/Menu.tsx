@@ -45,8 +45,8 @@ export default function Menu() {
   return (
     <>
       <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-10 glass-effect border-b border-border">
-        <div className="container bg-white mx-auto px-4 py-4 flex items-center gap-4">
+      <header className="sticky top-0 z-10 bg-white border-b border-border">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
