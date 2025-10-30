@@ -21,22 +21,22 @@ export default function OrderTracking() {
   const orderNumber = location.state?.orderNumber || '#IZI00000';
   const [status, setStatus] = useState<OrderStatus>('received');
 
-  useEffect(() => {
-    // Simula progressão do pedido
-    const statuses: OrderStatus[] = ['received', 'preparing', 'delivery', 'delivered'];
-    let currentIndex = 0;
+  // useEffect(() => {
+  //   // Simula progressão do pedido
+  //   const statuses: OrderStatus[] = ['received', 'preparing', 'delivery', 'delivered'];
+  //   let currentIndex = 0;
 
-    const interval = setInterval(() => {
-      currentIndex++;
-      if (currentIndex < statuses.length) {
-        setStatus(statuses[currentIndex]);
-      } else {
-        clearInterval(interval);
-      }
-    }, 5000);
+  //   const interval = setInterval(() => {
+  //     currentIndex++;
+  //     if (currentIndex < statuses.length) {
+  //       setStatus(statuses[currentIndex]);
+  //     } else {
+  //       clearInterval(interval);
+  //     }
+  //   }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const currentStatus = statusData[status];
   const StatusIcon = currentStatus.icon;
