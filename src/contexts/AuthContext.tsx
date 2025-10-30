@@ -94,38 +94,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (telefone: string, password: string) => {
     try {
-      // Buscar o email associado ao telefone
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('telefone', telefone)
-        .single();
-
-      if (profileError || !profileData) {
-        return { error: { message: 'Telefone não encontrado' } };
-      }
-
-      // Buscar o email do usuário
-      const { data: { user: authUser }, error: userError } = await supabase.auth.admin.getUserById(profileData.id);
+      // Converter telefone para o formato de email usado no cadastro
+      const email = `${telefone}@izi.com`;
       
-      if (userError || !authUser?.email) {
-        // Fallback: tentar login direto com telefone como email
-        const emailAttempt = `${telefone}@izi.com`;
-        const { error } = await supabase.auth.signInWithPassword({
-          email: emailAttempt,
-          password
-        });
-        return { error };
-      }
-
       const { error } = await supabase.auth.signInWithPassword({
-        email: authUser.email,
+        email,
         password
       });
 
-      return { error };
+      if (error) {
+        return { error: { message: 'Telefone ou senha incorretos' } };
+      }
+
+      return { error: null };
     } catch (error: any) {
-      return { error };
+      return { error: { message: 'Erro ao fazer login' } };
     }
   };
 
