@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Plus, ChefHat } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,31 +7,89 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { products } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
-import { Product, CartItem } from '@/types/product';
+import { CartItem } from '@/types/product';
 import { toast } from 'sonner';
 import BottomNavigation from '@/components/BottomNavigation';
+import { supabase } from '@/integrations/supabase/client';
+import heroPizza from '@/assets/hero-pizza.jpg';
+
+interface Product {
+  id: string;
+  nome: string;
+  descricao: string;
+  preco: number;
+  categoria: string;
+  imagem_url: string;
+  ingredientes: string[];
+  disponivel: boolean;
+}
 
 export default function Menu() {
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [size, setSize] = useState<'P' | 'M' | 'G' | 'GG'>('M');
   const [observations, setObservations] = useState('');
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('produtos')
+        .select('id, nome, descricao, preco, categoria, imagem_url, ingredientes, disponivel')
+        .eq('disponivel', true)
+        .order('categoria', { ascending: true })
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+      
+      const mappedProducts: Product[] = (data || []).map((p: any) => ({
+        id: p.id,
+        nome: p.nome || '',
+        descricao: p.descricao || '',
+        preco: Number(p.preco) || 0,
+        categoria: p.categoria || '',
+        imagem_url: p.imagem_url || '',
+        ingredientes: Array.isArray(p.ingredientes) ? p.ingredientes : [],
+        disponivel: p.disponivel
+      }));
+      
+      setProducts(mappedProducts);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      toast.error('Erro ao carregar produtos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getProductsByCategory = (category: string) => {
+    return products.filter(p => p.categoria.toLowerCase() === category.toLowerCase());
+  };
 
   const handleAddToCart = () => {
     if (!selectedProduct) return;
     
     const cartItem: CartItem = {
-      ...selectedProduct,
+      id: selectedProduct.id,
+      name: selectedProduct.nome,
+      description: selectedProduct.descricao,
+      price: selectedProduct.preco,
+      image: selectedProduct.imagem_url || heroPizza,
+      category: selectedProduct.categoria as any,
       quantity: 1,
       size,
       observations: observations || undefined
     };
     
     addItem(cartItem);
-    toast.success('Pizza adicionada ao carrinho! 🍕');
+    toast.success('Produto adicionado ao carrinho! 🍕');
     setSelectedProduct(null);
     setObservations('');
     setSize('M');
@@ -41,6 +99,13 @@ export default function Menu() {
     const multipliers = { P: 0.7, M: 1, G: 1.3, GG: 1.6 };
     return (basePrice * multipliers[size]).toFixed(2);
   };
+
+  const categories = [
+    { value: 'pizza', label: 'Pizzas' },
+    { value: 'bebida', label: 'Bebidas' },
+    { value: 'combo', label: 'Combos' },
+    { value: 'sobremesa', label: 'Sobremesas' }
+  ];
 
   return (
     <>
@@ -55,38 +120,55 @@ export default function Menu() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="classicas" className="w-full">
-          <TabsList className="w-full sticky top-20 z-10 grid grid-cols-3 mb-6">
-            <TabsTrigger value="classicas">Clássicas</TabsTrigger>
-            <TabsTrigger value="especiais">Especiais</TabsTrigger>
-            <TabsTrigger value="doces">Doces</TabsTrigger>
-          </TabsList>
+        {/* Botão Monte sua Pizza */}
+        <div className="mb-6">
+          <Button 
+            variant="hero" 
+            size="lg" 
+            className="w-full"
+            onClick={() => navigate('/customize-pizza')}
+          >
+            <ChefHat className="h-5 w-5 mr-2" />
+            Monte sua Pizza
+          </Button>
+        </div>
 
-          {['classicas', 'especiais', 'doces'].map(category => (
-            <TabsContent key={category} value={category} className="space-y-4">
-              {products.filter(p => p.category === category).map(product => (
-                <Card key={product.id} className="overflow-hidden card-elevated hover:scale-[1.02] transition-transform">
-                  <div className="flex gap-4 p-4">
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-24 h-24 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-foreground">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-primary font-bold text-lg">
-                          R$ {product.price.toFixed(2)}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => navigate('/customize-pizza', { state: { product } })}
-                          >
-                            Personalizar
-                          </Button>
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Carregando produtos...</p>
+          </div>
+        ) : (
+          <Tabs defaultValue="pizza" className="w-full">
+            <TabsList className="w-full sticky top-20 z-10 grid grid-cols-4 mb-6">
+              {categories.map(cat => (
+                <TabsTrigger key={cat.value} value={cat.value}>
+                  {cat.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {categories.map(category => (
+              <TabsContent key={category.value} value={category.value} className="space-y-4">
+                {getProductsByCategory(category.value).map(product => (
+                  <Card key={product.id} className="overflow-hidden card-elevated hover:scale-[1.02] transition-transform">
+                    <div className="flex gap-4 p-4">
+                      <img 
+                        src={product.imagem_url || heroPizza} 
+                        alt={product.nome}
+                        className="w-24 h-24 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-foreground">{product.nome}</h3>
+                        <p className="text-sm text-muted-foreground mb-1">{product.descricao}</p>
+                        {product.ingredientes && product.ingredientes.length > 0 && (
+                          <p className="text-xs text-muted-foreground mb-2">
+                            <span className="font-semibold">Ingredientes:</span> {product.ingredientes.join(', ')}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-primary font-bold text-lg">
+                            R$ {product.preco.toFixed(2)}
+                          </span>
                           <Button 
                             size="sm" 
                             variant="gold"
@@ -98,18 +180,18 @@ export default function Menu() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </TabsContent>
-          ))}
-        </Tabs>
+                  </Card>
+                ))}
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
       </div>
 
       <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedProduct?.name}</DialogTitle>
+            <DialogTitle>{selectedProduct?.nome}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -142,7 +224,7 @@ export default function Menu() {
 
             <div className="flex items-center justify-between pt-4 border-t">
               <span className="text-xl font-bold text-primary">
-                R$ {selectedProduct && getSizePrice(selectedProduct.price)}
+                R$ {selectedProduct && getSizePrice(selectedProduct.preco)}
               </span>
               <Button variant="gold" onClick={handleAddToCart}>
                 Adicionar ao Carrinho
