@@ -2,6 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { Pizza, Star, ShoppingBag, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import logo from '@/assets/logoizichefe.png';
 import heroPizza from '@/assets/hero-pizza.jpg';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -9,6 +12,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+
+interface ProductSize {
+  tamanho: string;
+  preco: number;
+}
 
 interface Product {
   id: string;
@@ -19,6 +27,7 @@ interface Product {
   imagem_url: string;
   ingredientes: string[];
   disponivel: boolean;
+  tamanhos: ProductSize[];
 }
 
 export default function Index() {
@@ -26,6 +35,9 @@ export default function Index() {
   const { addItem } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [size, setSize] = useState<'P' | 'M' | 'G' | 'GG'>('M');
+  const [observations, setObservations] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -35,7 +47,7 @@ export default function Index() {
     try {
       const { data, error } = await (supabase as any)
         .from('produtos')
-        .select('id, nome, descricao, preco, categoria, imagem_url, ingredientes, disponivel')
+        .select('id, nome, descricao, preco, categoria, imagem_url, ingredientes, disponivel, tamanhos')
         .eq('disponivel', true)
         .order('categoria', { ascending: true })
         .order('nome', { ascending: true });
@@ -50,7 +62,8 @@ export default function Index() {
         categoria: p.categoria || '',
         imagem_url: p.imagem_url || '',
         ingredientes: Array.isArray(p.ingredientes) ? p.ingredientes : [],
-        disponivel: p.disponivel
+        disponivel: p.disponivel,
+        tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos : []
       }));
       
       setProducts(mappedProducts);
@@ -66,18 +79,36 @@ export default function Index() {
     return products.filter(p => p.categoria.toLowerCase() === category.toLowerCase());
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = () => {
+    if (!selectedProduct) return;
+    
+    const selectedSize = selectedProduct.tamanhos.find(t => t.tamanho === size);
+    const finalPrice = selectedSize ? selectedSize.preco : selectedProduct.preco;
+    
     addItem({
-      id: product.id,
-      name: product.nome,
-      description: product.descricao,
-      price: product.preco,
-      image: product.imagem_url || heroPizza,
-      category: product.categoria as any,
+      id: selectedProduct.id,
+      name: selectedProduct.nome,
+      description: selectedProduct.descricao,
+      price: finalPrice,
+      image: selectedProduct.imagem_url || heroPizza,
+      category: selectedProduct.categoria as any,
       quantity: 1,
-      size: 'M'
+      size,
+      observations: observations || undefined
     });
     toast.success('Produto adicionado ao carrinho! 🍕');
+    setSelectedProduct(null);
+    setObservations('');
+    setSize('M');
+  };
+
+  const getSizePrice = (product: Product, selectedSize: string) => {
+    const sizeData = product.tamanhos.find(t => t.tamanho === selectedSize);
+    return sizeData ? sizeData.preco.toFixed(2) : product.preco.toFixed(2);
+  };
+
+  const isSizeAvailable = (product: Product, selectedSize: string) => {
+    return product.tamanhos.some(t => t.tamanho === selectedSize);
   };
 
   return (
@@ -163,7 +194,7 @@ export default function Index() {
                                 <Button 
                                   size="sm" 
                                   variant="gold"
-                                  onClick={() => handleAddToCart(product)}
+                                  onClick={() => setSelectedProduct(product)}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
                                   Adicionar
@@ -180,6 +211,56 @@ export default function Index() {
             </>
           )}
         </div>
+
+        <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{selectedProduct?.nome}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="mb-2 block">Tamanho</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {(['P', 'M', 'G', 'GG'] as const).map(s => {
+                    const available = selectedProduct ? isSizeAvailable(selectedProduct, s) : false;
+                    return (
+                      <Button
+                        key={s}
+                        variant={size === s ? 'default' : 'outline'}
+                        onClick={() => setSize(s)}
+                        disabled={!available}
+                        className="w-full"
+                      >
+                        {s}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="observations">Observações</Label>
+                <Textarea
+                  id="observations"
+                  placeholder="Ex: Sem cebola, bem passada..."
+                  value={observations}
+                  onChange={(e) => setObservations(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t">
+                <span className="text-xl font-bold text-primary">
+                  R$ {selectedProduct && getSizePrice(selectedProduct, size)}
+                </span>
+                <Button variant="gold" onClick={handleAddToCart}>
+                  Adicionar ao Carrinho
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
       <BottomNavigation />
     </>

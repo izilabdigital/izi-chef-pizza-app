@@ -14,6 +14,11 @@ import BottomNavigation from '@/components/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import heroPizza from '@/assets/hero-pizza.jpg';
 
+interface ProductSize {
+  tamanho: string;
+  preco: number;
+}
+
 interface Product {
   id: string;
   nome: string;
@@ -23,6 +28,7 @@ interface Product {
   imagem_url: string;
   ingredientes: string[];
   disponivel: boolean;
+  tamanhos: ProductSize[];
 }
 
 export default function Menu() {
@@ -42,7 +48,7 @@ export default function Menu() {
     try {
       const { data, error } = await (supabase as any)
         .from('produtos')
-        .select('id, nome, descricao, preco, categoria, imagem_url, ingredientes, disponivel')
+        .select('id, nome, descricao, preco, categoria, imagem_url, ingredientes, disponivel, tamanhos')
         .eq('disponivel', true)
         .order('categoria', { ascending: true })
         .order('nome', { ascending: true });
@@ -57,7 +63,8 @@ export default function Menu() {
         categoria: p.categoria || '',
         imagem_url: p.imagem_url || '',
         ingredientes: Array.isArray(p.ingredientes) ? p.ingredientes : [],
-        disponivel: p.disponivel
+        disponivel: p.disponivel,
+        tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos : []
       }));
       
       setProducts(mappedProducts);
@@ -76,11 +83,14 @@ export default function Menu() {
   const handleAddToCart = () => {
     if (!selectedProduct) return;
     
+    const selectedSize = selectedProduct.tamanhos.find(t => t.tamanho === size);
+    const finalPrice = selectedSize ? selectedSize.preco : selectedProduct.preco;
+    
     const cartItem: CartItem = {
       id: selectedProduct.id,
       name: selectedProduct.nome,
       description: selectedProduct.descricao,
-      price: selectedProduct.preco,
+      price: finalPrice,
       image: selectedProduct.imagem_url || heroPizza,
       category: selectedProduct.categoria as any,
       quantity: 1,
@@ -95,9 +105,13 @@ export default function Menu() {
     setSize('M');
   };
 
-  const getSizePrice = (basePrice: number) => {
-    const multipliers = { P: 0.7, M: 1, G: 1.3, GG: 1.6 };
-    return (basePrice * multipliers[size]).toFixed(2);
+  const getSizePrice = (product: Product, selectedSize: string) => {
+    const sizeData = product.tamanhos.find(t => t.tamanho === selectedSize);
+    return sizeData ? sizeData.preco.toFixed(2) : product.preco.toFixed(2);
+  };
+
+  const isSizeAvailable = (product: Product, selectedSize: string) => {
+    return product.tamanhos.some(t => t.tamanho === selectedSize);
   };
 
   const categories = [
@@ -194,22 +208,26 @@ export default function Menu() {
             <DialogTitle>{selectedProduct?.nome}</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="mb-2 block">Tamanho</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {(['P', 'M', 'G', 'GG'] as const).map(s => (
-                  <Button
-                    key={s}
-                    variant={size === s ? 'default' : 'outline'}
-                    onClick={() => setSize(s)}
-                    className="w-full"
-                  >
-                    {s}
-                  </Button>
-                ))}
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="mb-2 block">Tamanho</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {(['P', 'M', 'G', 'GG'] as const).map(s => {
+                    const available = selectedProduct ? isSizeAvailable(selectedProduct, s) : false;
+                    return (
+                      <Button
+                        key={s}
+                        variant={size === s ? 'default' : 'outline'}
+                        onClick={() => setSize(s)}
+                        disabled={!available}
+                        className="w-full"
+                      >
+                        {s}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
             <div>
               <Label htmlFor="observations">Observações</Label>
@@ -222,14 +240,14 @@ export default function Menu() {
               />
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t">
-              <span className="text-xl font-bold text-primary">
-                R$ {selectedProduct && getSizePrice(selectedProduct.preco)}
-              </span>
-              <Button variant="gold" onClick={handleAddToCart}>
-                Adicionar ao Carrinho
-              </Button>
-            </div>
+              <div className="flex items-center justify-between pt-4 border-t">
+                <span className="text-xl font-bold text-primary">
+                  R$ {selectedProduct && getSizePrice(selectedProduct, size)}
+                </span>
+                <Button variant="gold" onClick={handleAddToCart}>
+                  Adicionar ao Carrinho
+                </Button>
+              </div>
           </div>
         </DialogContent>
       </Dialog>
