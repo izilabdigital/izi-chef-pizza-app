@@ -6,6 +6,12 @@ interface Profile {
   id: string;
   nome: string;
   telefone: string;
+  cep?: string;
+  estado?: string;
+  bairro?: string;
+  rua?: string;
+  numero?: string;
+  complemento?: string;
 }
 
 interface AuthContextType {

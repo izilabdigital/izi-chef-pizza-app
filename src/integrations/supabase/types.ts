@@ -77,6 +77,35 @@ export type Database = {
         }
         Relationships: []
       }
+      favoritos: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favoritos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           bairro: string
@@ -85,6 +114,7 @@ export type Database = {
           created_at: string
           cupom: string | null
           desconto: number | null
+          entregador_id: string | null
           estado: string
           forma_pagamento: string
           id: string
@@ -92,6 +122,7 @@ export type Database = {
           nome: string
           numero: string
           numero_pedido: string
+          pizzaiolo_id: string | null
           rua: string
           status: string
           subtotal: number
@@ -108,6 +139,7 @@ export type Database = {
           created_at?: string
           cupom?: string | null
           desconto?: number | null
+          entregador_id?: string | null
           estado: string
           forma_pagamento: string
           id?: string
@@ -115,6 +147,7 @@ export type Database = {
           nome: string
           numero: string
           numero_pedido: string
+          pizzaiolo_id?: string | null
           rua: string
           status?: string
           subtotal: number
@@ -131,6 +164,7 @@ export type Database = {
           created_at?: string
           cupom?: string | null
           desconto?: number | null
+          entregador_id?: string | null
           estado?: string
           forma_pagamento?: string
           id?: string
@@ -138,6 +172,7 @@ export type Database = {
           nome?: string
           numero?: string
           numero_pedido?: string
+          pizzaiolo_id?: string | null
           rua?: string
           status?: string
           subtotal?: number
@@ -147,26 +182,184 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_entregador_id_fkey"
+            columns: ["entregador_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_pizzaiolo_id_fkey"
+            columns: ["pizzaiolo_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ponto_funcionarios: {
+        Row: {
+          created_at: string
+          data: string
+          hora_entrada: string
+          hora_saida: string | null
+          id: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          hora_entrada: string
+          hora_saida?: string | null
+          id?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          hora_entrada?: string
+          hora_saida?: string | null
+          id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_funcionarios_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          categoria: string
+          created_at: string
+          desconto_percentual: number | null
+          descricao: string | null
+          disponivel: boolean
+          e_sobremesa: boolean | null
+          id: string
+          imagem_url: string | null
+          ingredientes: Json | null
+          itens_combo: Json | null
+          nome: string
+          preco: number
+          tamanhos: Json | null
+          tipo_embalagem: string | null
+          updated_at: string
+          validade_promocao: string | null
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          desconto_percentual?: number | null
+          descricao?: string | null
+          disponivel?: boolean
+          e_sobremesa?: boolean | null
+          id?: string
+          imagem_url?: string | null
+          ingredientes?: Json | null
+          itens_combo?: Json | null
+          nome: string
+          preco: number
+          tamanhos?: Json | null
+          tipo_embalagem?: string | null
+          updated_at?: string
+          validade_promocao?: string | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          desconto_percentual?: number | null
+          descricao?: string | null
+          disponivel?: boolean
+          e_sobremesa?: boolean | null
+          id?: string
+          imagem_url?: string | null
+          ingredientes?: Json | null
+          itens_combo?: Json | null
+          nome?: string
+          preco?: number
+          tamanhos?: Json | null
+          tipo_embalagem?: string | null
+          updated_at?: string
+          validade_promocao?: string | null
+        }
         Relationships: []
       }
       profiles: {
         Row: {
+          bairro: string | null
+          cep: string | null
+          complemento: string | null
           created_at: string | null
+          estado: string | null
           id: string
           nome: string
+          numero: string | null
+          rua: string | null
           telefone: string
         }
         Insert: {
+          bairro?: string | null
+          cep?: string | null
+          complemento?: string | null
           created_at?: string | null
+          estado?: string | null
           id: string
           nome: string
+          numero?: string | null
+          rua?: string | null
           telefone: string
         }
         Update: {
+          bairro?: string | null
+          cep?: string | null
+          complemento?: string | null
           created_at?: string | null
+          estado?: string | null
           id?: string
           nome?: string
+          numero?: string | null
+          rua?: string | null
           telefone?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          ativo: boolean
+          cargo: string
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          ponto_em_aberto: boolean | null
+          ultimo_login: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cargo: string
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          ponto_em_aberto?: boolean | null
+          ultimo_login?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          ponto_em_aberto?: boolean | null
+          ultimo_login?: string | null
         }
         Relationships: []
       }
@@ -176,6 +369,7 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
+      get_user_role: { Args: { _user_id: string }; Returns: string }
       increment_cupom_uso: { Args: { cupom_code: string }; Returns: undefined }
     }
     Enums: {

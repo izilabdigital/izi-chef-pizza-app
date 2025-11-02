@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, ChefHat } from 'lucide-react';
+import { ArrowLeft, Plus, ChefHat, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { CartItem } from '@/types/product';
 import { toast } from 'sonner';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -34,15 +35,78 @@ interface Product {
 export default function Menu() {
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [size, setSize] = useState<'P' | 'M' | 'G' | 'GG'>('M');
   const [observations, setObservations] = useState('');
+  const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+    if (user) {
+      loadFavoritos();
+    }
+  }, [user]);
+
+  const loadFavoritos = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('favoritos')
+        .select('produto_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      const favIds = new Set((data || []).map(f => f.produto_id));
+      setFavoritos(favIds);
+    } catch (error) {
+      console.error('Erro ao carregar favoritos:', error);
+    }
+  };
+
+  const toggleFavorito = async (produtoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Faça login para favoritar produtos');
+      return;
+    }
+
+    try {
+      if (favoritos.has(produtoId)) {
+        const { error } = await supabase
+          .from('favoritos')
+          .delete()
+          .eq('user_id', user!.id)
+          .eq('produto_id', produtoId);
+
+        if (error) throw error;
+        
+        setFavoritos(prev => {
+          const next = new Set(prev);
+          next.delete(produtoId);
+          return next;
+        });
+        toast.success('Removido dos favoritos');
+      } else {
+        const { error } = await supabase
+          .from('favoritos')
+          .insert({ user_id: user!.id, produto_id: produtoId });
+
+        if (error) throw error;
+        
+        setFavoritos(prev => new Set(prev).add(produtoId));
+        toast.success('Adicionado aos favoritos! ❤️');
+      }
+    } catch (error) {
+      console.error('Erro ao favoritar:', error);
+      toast.error('Erro ao favoritar produto');
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -164,7 +228,17 @@ export default function Menu() {
             {categories.map(category => (
               <TabsContent key={category.value} value={category.value} className="space-y-4">
                 {getProductsByCategory(category.value).map(product => (
-                  <Card key={product.id} className="overflow-hidden card-elevated hover:scale-[1.02] transition-transform">
+                  <Card key={product.id} className="overflow-hidden card-elevated hover:scale-[1.02] transition-transform relative">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-2 right-2 z-10"
+                      onClick={(e) => toggleFavorito(product.id, e)}
+                    >
+                      <Heart 
+                        className={`h-5 w-5 ${favoritos.has(product.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+                      />
+                    </Button>
                     <div className="flex gap-4 p-4">
                       <img 
                         src={product.imagem_url || heroPizza} 

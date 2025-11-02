@@ -30,6 +30,22 @@ export default function Cart() {
   const [cupom, setCupom] = useState('');
   const [desconto, setDesconto] = useState(0);
   const [cupomAplicado, setCupomAplicado] = useState(false);
+
+  // Pré-preencher com dados do perfil
+  useState(() => {
+    if (profile) {
+      setCustomerName(profile.nome || '');
+      setCustomerPhone(profile.telefone || '');
+      if (profile.cep) {
+        setCep(profile.cep);
+        setEstado(profile.estado || '');
+        setBairro(profile.bairro || '');
+        setRua(profile.rua || '');
+        setNumero(profile.numero || '');
+        setComplemento(profile.complemento || '');
+      }
+    }
+  });
   
   const deliveryFee = 8.00;
   const subtotal = total;
