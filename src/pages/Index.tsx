@@ -187,19 +187,28 @@ export default function Index() {
                                   <span className="font-semibold">Ingredientes:</span> {product.ingredientes.join(', ')}
                                 </p>
                               )}
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-primary font-bold text-lg">
-                                  R$ {product.preco.toFixed(2)}
-                                </span>
-                                <Button 
-                                  size="sm" 
-                                  variant="gold"
-                                  onClick={() => setSelectedProduct(product)}
-                                >
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Adicionar
-                                </Button>
-                              </div>
+                      <div className="flex items-center justify-between mt-2">
+                        {product.categoria.toLowerCase() === 'pizza' && product.tamanhos.length > 0 ? (
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground font-semibold mb-1">Preços:</p>
+                            <p className="text-sm text-primary font-bold">
+                              {product.tamanhos.map(t => `${t.tamanho}: R$ ${t.preco.toFixed(2)}`).join(' - ')}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-primary font-bold text-lg">
+                            R$ {product.preco.toFixed(2)}
+                          </span>
+                        )}
+                        <Button 
+                          size="sm" 
+                          variant="gold"
+                          onClick={() => setSelectedProduct(product)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Adicionar
+                        </Button>
+                      </div>
                             </div>
                           </div>
                         </Card>

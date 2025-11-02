@@ -6,13 +6,25 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { products } from '@/data/products';
 import { borderOptions, extraOptions, sauceOptions } from '@/data/customization-options';
 import { PizzaFlavor, CustomPizza, BorderOption, ExtraOption } from '@/types/pizza-customization';
 import PizzaVisualizer from '@/components/PizzaVisualizer';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 import { Product, CartItem } from '@/types/product';
+import { supabase } from '@/integrations/supabase/client';
+import heroPizza from '@/assets/hero-pizza.jpg';
+
+interface DBProduct {
+  id: string;
+  nome: string;
+  descricao: string;
+  preco: number;
+  categoria: string;
+  imagem_url: string;
+  ingredientes: string[];
+  tamanhos: Array<{ tamanho: string; preco: number }>;
+}
 
 export default function CustomizePizza() {
   const navigate = useNavigate();
@@ -28,10 +40,45 @@ export default function CustomizePizza() {
   const [selectedExtras, setSelectedExtras] = useState<ExtraOption[]>([]);
   const [selectedSauces, setSelectedSauces] = useState<ExtraOption[]>([sauceOptions[0]]);
   const [observations, setObservations] = useState('');
+  const [availableFlavors, setAvailableFlavors] = useState<DBProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const maxFlavors = size === 'P' ? 2 : size === 'M' ? 2 : size === 'G' ? 3 : 4;
-  
-  const availableFlavors = products.filter(p => p.category !== 'doces');
+
+  useEffect(() => {
+    fetchPizzas();
+  }, []);
+
+  const fetchPizzas = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('produtos')
+        .select('id, nome, descricao, preco, categoria, imagem_url, ingredientes, tamanhos')
+        .eq('categoria', 'pizza')
+        .eq('disponivel', true)
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+
+      const mappedProducts: DBProduct[] = (data || []).map((p: any) => ({
+        id: p.id,
+        nome: p.nome || '',
+        descricao: p.descricao || '',
+        preco: Number(p.preco) || 0,
+        categoria: p.categoria || '',
+        imagem_url: p.imagem_url || '',
+        ingredientes: Array.isArray(p.ingredientes) ? p.ingredientes : [],
+        tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos : []
+      }));
+
+      setAvailableFlavors(mappedProducts);
+    } catch (error) {
+      console.error('Erro ao buscar pizzas:', error);
+      toast.error('Erro ao carregar pizzas');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getSizeMultiplier = () => {
     const multipliers = { P: 0.7, M: 1, G: 1.3, GG: 1.6 };
@@ -59,7 +106,7 @@ export default function CustomizePizza() {
     return sizePrice + borderPrice + extrasPrice + saucesPrice;
   };
 
-  const toggleFlavor = (product: Product) => {
+  const toggleFlavor = (product: DBProduct) => {
     const existing = selectedFlavors.find(f => f.id === product.id);
     
     if (existing) {
@@ -73,8 +120,8 @@ export default function CustomizePizza() {
       const fraction = 1 / (selectedFlavors.length + 1);
       const newFlavor: PizzaFlavor = {
         id: product.id,
-        name: product.name,
-        price: product.price,
+        name: product.nome,
+        price: product.preco,
         fraction
       };
       
@@ -119,7 +166,7 @@ export default function CustomizePizza() {
       name: 'Pizza Personalizada',
       description: customPizzaDescription,
       price: calculatePrice(),
-      image: selectedFlavors[0]?.id ? products.find(p => p.id === selectedFlavors[0].id)?.image || baseProduct?.image || '' : baseProduct?.image || '',
+      image: selectedFlavors[0]?.id ? availableFlavors.find(p => p.id === selectedFlavors[0].id)?.imagem_url || heroPizza : heroPizza,
       category: 'especiais',
       quantity: 1,
       size,
@@ -201,33 +248,37 @@ export default function CustomizePizza() {
             <span className="bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center">2</span>
             Escolha os Sabores ({selectedFlavors.length}/{maxFlavors})
           </h3>
-          <div className="grid gap-3">
-            {availableFlavors.map(product => {
-              const isSelected = selectedFlavors.some(f => f.id === product.id);
-              return (
-                <Card 
-                  key={product.id} 
-                  className={`p-3 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}
-                  onClick={() => toggleFlavor(product)}
-                >
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-bold">{product.name}</h4>
-                      <p className="text-sm text-muted-foreground">R$ {product.price.toFixed(2)}</p>
+          {loading ? (
+            <p className="text-center text-muted-foreground">Carregando pizzas...</p>
+          ) : (
+            <div className="grid gap-3">
+              {availableFlavors.map(product => {
+                const isSelected = selectedFlavors.some(f => f.id === product.id);
+                return (
+                  <Card 
+                    key={product.id} 
+                    className={`p-3 cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => toggleFlavor(product)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={product.imagem_url || heroPizza} 
+                        alt={product.nome}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-bold">{product.nome}</h4>
+                        <p className="text-sm text-muted-foreground">R$ {product.preco.toFixed(2)}</p>
+                      </div>
+                      {isSelected && (
+                        <Check className="h-6 w-6 text-primary" />
+                      )}
                     </div>
-                    {isSelected && (
-                      <Check className="h-6 w-6 text-primary" />
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </Card>
 
         {/* Step 3: Borda */}
