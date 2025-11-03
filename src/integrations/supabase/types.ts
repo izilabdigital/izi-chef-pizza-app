@@ -77,6 +77,51 @@ export type Database = {
         }
         Relationships: []
       }
+      enderecos: {
+        Row: {
+          bairro: string
+          cep: string
+          complemento: string | null
+          created_at: string
+          estado: string
+          id: string
+          is_principal: boolean | null
+          nome_endereco: string
+          numero: string
+          rua: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bairro: string
+          cep: string
+          complemento?: string | null
+          created_at?: string
+          estado: string
+          id?: string
+          is_principal?: boolean | null
+          nome_endereco: string
+          numero: string
+          rua: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string
+          cep?: string
+          complemento?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          is_principal?: boolean | null
+          nome_endereco?: string
+          numero?: string
+          rua?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       favoritos: {
         Row: {
           created_at: string

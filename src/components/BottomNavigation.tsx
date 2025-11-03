@@ -16,7 +16,7 @@ export default function BottomNavigation() {
     { icon: Home, label: 'Início', path: '/' },
     { icon: Pizza, label: 'Cardápio', path: '/menu' },
     { icon: ShoppingCart, label: 'Carrinho', path: '/cart', badge: itemCount },
-    { icon: Package, label: 'Pedidos', path: isAuthenticated ? '/meus-pedidos' : '/login' }
+    { icon: Package, label: 'Perfil', path: isAuthenticated ? '/profile' : '/login' }
   ];
 
   return (

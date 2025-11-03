@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Minus, Plus, Trash2, MessageCircle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,26 @@ import { useCEP } from '@/hooks/useCEP';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface Endereco {
+  id: string;
+  nome_endereco: string;
+  cep: string;
+  estado: string;
+  bairro: string;
+  rua: string;
+  numero: string;
+  complemento?: string;
+  is_principal: boolean;
+}
+
 export default function Cart() {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
   const { user, profile } = useAuth();
   const { searchCEP, loading: cepLoading } = useCEP();
   
+  const [enderecos, setEnderecos] = useState<Endereco[]>([]);
+  const [enderecoSelecionado, setEnderecoSelecionado] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [cep, setCep] = useState('');
@@ -31,21 +45,59 @@ export default function Cart() {
   const [desconto, setDesconto] = useState(0);
   const [cupomAplicado, setCupomAplicado] = useState(false);
 
-  // Pré-preencher com dados do perfil
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setCustomerName(profile.nome || '');
       setCustomerPhone(profile.telefone || '');
-      if (profile.cep) {
-        setCep(profile.cep);
-        setEstado(profile.estado || '');
-        setBairro(profile.bairro || '');
-        setRua(profile.rua || '');
-        setNumero(profile.numero || '');
-        setComplemento(profile.complemento || '');
+    }
+    if (user) {
+      loadEnderecos();
+    }
+  }, [profile, user]);
+
+  const loadEnderecos = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('enderecos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_principal', { ascending: false });
+
+    if (data) {
+      setEnderecos(data);
+      const principal = data.find(e => e.is_principal);
+      if (principal) {
+        setEnderecoSelecionado(principal.id);
+        preencherEndereco(principal);
       }
     }
-  });
+  };
+
+  const preencherEndereco = (endereco: Endereco) => {
+    setCep(endereco.cep);
+    setEstado(endereco.estado);
+    setBairro(endereco.bairro);
+    setRua(endereco.rua);
+    setNumero(endereco.numero);
+    setComplemento(endereco.complemento || '');
+  };
+
+  const handleEnderecoChange = (enderecoId: string) => {
+    if (enderecoId === 'novo') {
+      setEnderecoSelecionado('');
+      setCep('');
+      setEstado('');
+      setBairro('');
+      setRua('');
+      setNumero('');
+      setComplemento('');
+    } else {
+      setEnderecoSelecionado(enderecoId);
+      const endereco = enderecos.find(e => e.id === enderecoId);
+      if (endereco) preencherEndereco(endereco);
+    }
+  };
   
   const deliveryFee = 8.00;
   const subtotal = total;
@@ -358,6 +410,25 @@ export default function Cart() {
 
         <Card className="p-4 space-y-4">
           <h3 className="font-bold text-lg">Endereço de Entrega</h3>
+          
+          {user && enderecos.length > 0 && (
+            <div>
+              <Label>Selecione um endereço</Label>
+              <Select value={enderecoSelecionado} onValueChange={handleEnderecoChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um endereço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {enderecos.map((endereco) => (
+                    <SelectItem key={endereco.id} value={endereco.id}>
+                      {endereco.nome_endereco} - {endereco.rua}, {endereco.numero}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="novo">+ Usar novo endereço</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div className="flex gap-2">
             <div className="flex-1">
