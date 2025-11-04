@@ -23,8 +23,11 @@ Deno.serve(async (req) => {
     const payload: OrderStatusPayload = await req.json();
     console.log('Notificação de status:', payload);
 
-    // Enviar para o webhook externo
-    const webhookUrl = 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea';
+    // Get webhook URL from environment variable
+    const webhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    if (!webhookUrl) {
+      throw new Error('N8N_WEBHOOK_URL not configured');
+    }
     
     const webhookPayload = {
       tipo: 'status_atualizado',

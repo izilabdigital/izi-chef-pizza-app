@@ -212,71 +212,23 @@ export default function Cart() {
         user_id: user?.id || null
       };
 
-      // Salvar pedido no Supabase
-      const { data: insertedPedido, error: insertError } = await supabase
-        .from('pedidos')
-        .insert([pedidoData])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      // Atualizar uso do cupom se aplicado
-      if (cupomAplicado && cupom) {
-        await supabase.rpc('increment_cupom_uso', { cupom_code: cupom.toUpperCase() });
-      }
-
-      // Enviar pedido para o webhook
-      try {
-        const webhookData = {
-          id: insertedPedido.id,
-          numero_pedido: orderNumber,
-          cliente: {
-            nome: customerName,
-            telefone: customerPhone
-          },
-          endereco: {
-            cep,
-            estado,
-            bairro,
-            rua,
-            numero,
-            complemento
-          },
-          itens: items.map(item => ({
+      // Submit order through edge function (handles DB insert, coupon update, and webhook)
+      const { data: submitData, error: submitError } = await supabase.functions.invoke('submit-order', {
+        body: {
+          orderData: pedidoData,
+          items: items.map(item => ({
             id: item.id,
-            nome: item.name,
-            tamanho: item.size,
-            quantidade: item.quantity,
-            preco_unitario: item.price,
-            preco_total: item.price * item.quantity,
-            observacoes: item.observations || null
-          })),
-          pagamento: {
-            forma: paymentMethod,
-            cupom: cupomAplicado ? cupom.toUpperCase() : null,
-            desconto
-          },
-          valores: {
-            subtotal,
-            taxa_entrega: deliveryFee,
-            total: finalTotal
-          },
-          status: 'pendente',
-          criado_em: new Date().toISOString()
-        };
+            name: item.name,
+            size: item.size,
+            quantity: item.quantity,
+            price: item.price,
+            observations: item.observations || null
+          }))
+        }
+      });
 
-        await fetch('https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(webhookData)
-        });
-      } catch (webhookError) {
-        console.error('Erro ao enviar para webhook:', webhookError);
-        // Não bloquear o pedido se o webhook falhar
-      }
+      if (submitError) throw submitError;
+      if (!submitData?.success) throw new Error(submitData?.error || 'Failed to submit order');
 
       // Preparar mensagem WhatsApp
       const endereco = `${rua}, ${numero}${complemento ? ` - ${complemento}` : ''}, ${bairro}, ${estado} - CEP: ${cep}`;
@@ -307,7 +259,6 @@ export default function Cart() {
       toast.success('Pedido enviado! Aguarde o contato.');
       navigate('/order-tracking', { state: { orderNumber } });
     } catch (error) {
-      console.error('Erro ao finalizar pedido:', error);
       toast.error('Erro ao processar pedido. Tente novamente.');
     }
   };
