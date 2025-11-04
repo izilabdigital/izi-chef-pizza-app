@@ -60,14 +60,15 @@ export default function MeusPedidos() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: 'Erro ao carregar pedidos',
+          description: 'Tente novamente',
+          variant: 'destructive'
+        });
+        return;
+      }
       setPedidos((data as any) || []);
-    } catch (error) {
-      toast({
-        title: 'Erro ao carregar pedidos',
-        description: 'Tente novamente',
-        variant: 'destructive'
-      });
     } finally {
       setLoading(false);
     }
@@ -89,7 +90,14 @@ export default function MeusPedidos() {
         .update({ status: 'cancelado' })
         .eq('id', pedidoId);
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: 'Erro ao cancelar',
+          description: 'Tente novamente',
+          variant: 'destructive'
+        });
+        return;
+      }
 
       toast({
         title: 'Pedido cancelado',

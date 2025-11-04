@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCEP } from '@/hooks/useCEP';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 interface Endereco {
   id: string;
@@ -44,6 +45,27 @@ export default function Cart() {
   const [cupom, setCupom] = useState('');
   const [desconto, setDesconto] = useState(0);
   const [cupomAplicado, setCupomAplicado] = useState(false);
+
+  // Input validation schemas
+  const phoneSchema = z.string()
+    .min(10, "Telefone deve ter no mínimo 10 dígitos")
+    .max(15, "Telefone deve ter no máximo 15 dígitos")
+    .regex(/^\+?[\d\s()-]+$/, "Telefone inválido");
+
+  const cepSchema = z.string()
+    .length(8, "CEP deve ter 8 dígitos")
+    .regex(/^\d+$/, "CEP deve conter apenas números");
+
+  const addressSchema = z.object({
+    nome: z.string().trim().min(3, "Nome deve ter no mínimo 3 caracteres").max(100),
+    telefone: phoneSchema,
+    cep: cepSchema,
+    estado: z.string().length(2, "Estado deve ter 2 caracteres"),
+    bairro: z.string().trim().min(2).max(100),
+    rua: z.string().trim().min(3).max(200),
+    numero: z.string().trim().min(1).max(10),
+    complemento: z.string().max(200).optional(),
+  });
 
   useEffect(() => {
     if (profile) {
@@ -179,6 +201,25 @@ export default function Cart() {
     if (!customerName || !customerPhone || !cep || !estado || !bairro || !rua || !numero || !paymentMethod) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
+    }
+
+    // Validate inputs
+    try {
+      addressSchema.parse({
+        nome: customerName,
+        telefone: customerPhone,
+        cep,
+        estado,
+        bairro,
+        rua,
+        numero,
+        complemento,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
     }
 
     try {

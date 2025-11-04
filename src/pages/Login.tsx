@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import BottomNavigation from '@/components/BottomNavigation';
+import { z } from 'zod';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,6 +27,21 @@ export default function Login() {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
 
+  // Validation schemas
+  const phoneSchema = z.string()
+    .min(10, "Telefone deve ter no mínimo 10 dígitos")
+    .max(15, "Telefone deve ter no máximo 15 dígitos")
+    .regex(/^\d+$/, "Telefone deve conter apenas números");
+
+  const passwordSchema = z.string()
+    .min(6, "Senha deve ter no mínimo 6 caracteres")
+    .max(100, "Senha muito longa");
+
+  const nameSchema = z.string()
+    .trim()
+    .min(3, "Nome deve ter no mínimo 3 caracteres")
+    .max(100, "Nome muito longo");
+
   // Redirect if already authenticated
   if (isAuthenticated) {
     navigate('/meus-pedidos');
@@ -35,22 +51,19 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (loginTelefone.length < 10) {
-      toast({
-        title: 'Telefone inválido',
-        description: 'Digite um número válido com DDD',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!loginPassword) {
-      toast({
-        title: 'Senha obrigatória',
-        description: 'Digite sua senha',
-        variant: 'destructive'
-      });
-      return;
+    // Validate inputs
+    try {
+      phoneSchema.parse(loginTelefone);
+      passwordSchema.parse(loginPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Erro de validação',
+          description: error.errors[0].message,
+          variant: 'destructive'
+        });
+        return;
+      }
     }
 
     setLoading(true);
@@ -60,7 +73,7 @@ export default function Login() {
     if (error) {
       toast({
         title: 'Erro ao fazer login',
-        description: error.message || 'Telefone ou senha incorretos',
+        description: 'Telefone ou senha incorretos',
         variant: 'destructive'
       });
       return;
@@ -76,31 +89,20 @@ export default function Login() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!signupNome) {
-      toast({
-        title: 'Nome obrigatório',
-        description: 'Digite seu nome',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (signupTelefone.length < 10) {
-      toast({
-        title: 'Telefone inválido',
-        description: 'Digite um número válido com DDD',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (signupPassword.length < 6) {
-      toast({
-        title: 'Senha muito curta',
-        description: 'A senha deve ter no mínimo 6 caracteres',
-        variant: 'destructive'
-      });
-      return;
+    // Validate inputs
+    try {
+      nameSchema.parse(signupNome);
+      phoneSchema.parse(signupTelefone);
+      passwordSchema.parse(signupPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Erro de validação',
+          description: error.errors[0].message,
+          variant: 'destructive'
+        });
+        return;
+      }
     }
 
     if (signupPassword !== signupConfirmPassword) {
@@ -123,7 +125,7 @@ export default function Login() {
     if (error) {
       toast({
         title: 'Erro ao criar conta',
-        description: error.message || 'Tente novamente',
+        description: 'Verifique seus dados e tente novamente',
         variant: 'destructive'
       });
       return;
