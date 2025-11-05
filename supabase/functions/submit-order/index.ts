@@ -63,35 +63,39 @@ Deno.serve(async (req) => {
     if (webhookUrl) {
       const webhookPayload = {
         id: insertedOrder.id,
-        numero_pedido: orderData.numero_pedido,
+        numero_pedido: orderData.numero_pedido || insertedOrder.numero_pedido,
         cliente: {
-          nome: orderData.nome,
-          telefone: orderData.telefone
+          nome: orderData.nome || insertedOrder.nome,
+          telefone: orderData.telefone || insertedOrder.telefone
         },
         endereco: {
-          cep: orderData.cep,
-          estado: orderData.estado,
-          bairro: orderData.bairro,
-          rua: orderData.rua,
-          numero: orderData.numero,
-          complemento: orderData.complemento
+          cep: orderData.cep || insertedOrder.cep,
+          estado: orderData.estado || insertedOrder.estado,
+          bairro: orderData.bairro || insertedOrder.bairro,
+          rua: orderData.rua || insertedOrder.rua,
+          numero: orderData.numero || insertedOrder.numero,
+          complemento: orderData.complemento || insertedOrder.complemento || ''
         },
         itens: items.map(item => ({
           id: item.id || null,
-          nome: item.name || item.nome || 'Produto',
-          tamanho: item.size || item.tamanho || 'M',
-          quantidade: item.quantity || item.quantidade || 1,
-          preco: item.price || item.preco || 0,
-          extras: item.extras || [],
-          observacoes: item.observations || item.observacoes || ''
+          nome: item.name || 'Produto',
+          tamanho: item.size || 'M',
+          quantidade: item.quantity || 1,
+          preco_unitario: item.price || 0,
+          preco_total: (item.price || 0) * (item.quantity || 1),
+          observacoes: item.observations || ''
         })),
-        forma_pagamento: orderData.forma_pagamento,
-        taxa_entrega: orderData.taxa_entrega,
-        subtotal: orderData.subtotal,
-        desconto: orderData.desconto,
-        cupom: orderData.cupom,
-        total: orderData.total,
-        status: orderData.status,
+        pagamento: {
+          forma: orderData.forma_pagamento || insertedOrder.forma_pagamento || 'Não informado'
+        },
+        valores: {
+          taxa_entrega: orderData.taxa_entrega || insertedOrder.taxa_entrega || 0,
+          subtotal: orderData.subtotal || insertedOrder.subtotal || 0,
+          desconto: orderData.desconto || insertedOrder.desconto || 0,
+          cupom: orderData.cupom || insertedOrder.cupom || null,
+          total: orderData.total || insertedOrder.total || 0
+        },
+        status: orderData.status || insertedOrder.status || 'pendente',
         created_at: insertedOrder.created_at
       };
 
