@@ -77,11 +77,13 @@ Deno.serve(async (req) => {
           complemento: orderData.complemento
         },
         itens: items.map(item => ({
-          id: item.id,
-          nome: item.name,
-          tamanho: item.size,
-          quantidade: item.quantity,
-          preco: item.price
+          id: item.id || null,
+          nome: item.name || item.nome || 'Produto',
+          tamanho: item.size || item.tamanho || 'M',
+          quantidade: item.quantity || item.quantidade || 1,
+          preco: item.price || item.preco || 0,
+          extras: item.extras || [],
+          observacoes: item.observations || item.observacoes || ''
         })),
         forma_pagamento: orderData.forma_pagamento,
         taxa_entrega: orderData.taxa_entrega,

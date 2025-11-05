@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import BottomNavigation from '@/components/BottomNavigation';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 type OrderStatus = 'received' | 'preparing' | 'delivery' | 'delivered';
 
@@ -18,25 +20,78 @@ const statusData = {
 export default function OrderTracking() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const orderNumber = location.state?.orderNumber || '#IZI00000';
   const [status, setStatus] = useState<OrderStatus>('received');
+  const [orderId, setOrderId] = useState<string | null>(null);
 
-  // useEffect(() => {
-  //   // Simula progressão do pedido
-  //   const statuses: OrderStatus[] = ['received', 'preparing', 'delivery', 'delivered'];
-  //   let currentIndex = 0;
+  useEffect(() => {
+    const loadOrder = async () => {
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select('id, status')
+        .eq('numero_pedido', orderNumber)
+        .single();
 
-  //   const interval = setInterval(() => {
-  //     currentIndex++;
-  //     if (currentIndex < statuses.length) {
-  //       setStatus(statuses[currentIndex]);
-  //     } else {
-  //       clearInterval(interval);
-  //     }
-  //   }, 5000);
+      if (error) {
+        console.error('Erro ao carregar pedido:', error);
+        return;
+      }
 
-  //   return () => clearInterval(interval);
-  // }, []);
+      if (data) {
+        setOrderId(data.id);
+        const statusMap: Record<string, OrderStatus> = {
+          'pendente': 'received',
+          'em preparo': 'preparing',
+          'pronto': 'preparing',
+          'em rota de entrega': 'delivery',
+          'entregue': 'delivered'
+        };
+        setStatus(statusMap[data.status] || 'received');
+      }
+    };
+
+    loadOrder();
+  }, [orderNumber]);
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    const channel = supabase
+      .channel('order-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pedidos',
+          filter: `id=eq.${orderId}`
+        },
+        (payload) => {
+          const newStatus = payload.new.status;
+          const statusMap: Record<string, OrderStatus> = {
+            'pendente': 'received',
+            'em preparo': 'preparing',
+            'pronto': 'preparing',
+            'em rota de entrega': 'delivery',
+            'entregue': 'delivered'
+          };
+          
+          const mappedStatus = statusMap[newStatus] || 'received';
+          setStatus(mappedStatus);
+          
+          toast({
+            title: 'Status atualizado!',
+            description: `Seu pedido agora está: ${statusData[mappedStatus].label}`
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, toast]);
 
   const currentStatus = statusData[status];
   const StatusIcon = currentStatus.icon;

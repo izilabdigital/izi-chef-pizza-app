@@ -50,6 +50,41 @@ export default function MeusPedidos() {
     loadPedidos();
   }, [user, isAuthenticated]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('user-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pedidos',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          setPedidos(prev => 
+            prev.map(pedido => 
+              pedido.id === payload.new.id 
+                ? { ...pedido, ...payload.new }
+                : pedido
+            )
+          );
+
+          toast({
+            title: 'Pedido atualizado',
+            description: `Status: ${statusLabels[payload.new.status]}`
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, toast]);
+
   const loadPedidos = async () => {
     if (!user) return;
 
