@@ -58,9 +58,10 @@ Deno.serve(async (req) => {
       await supabase.rpc('increment_cupom_uso', { cupom_code: orderData.cupom.toUpperCase() });
     }
 
-    // Send to webhook
-    const webhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
-    if (webhookUrl) {
+    // Send to webhook - MODIFIQUE A URL ABAIXO CONFORME NECESSÁRIO
+    const webhookUrl = 'https://seu-webhook-n8n.com/webhook/pedidos';
+    
+    if (webhookUrl && webhookUrl !== 'https://seu-webhook-n8n.com/webhook/pedidos') {
       const webhookPayload = {
         id: insertedOrder.id,
         numero_pedido: orderData.numero_pedido || insertedOrder.numero_pedido,

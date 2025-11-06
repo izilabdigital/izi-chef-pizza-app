@@ -23,10 +23,11 @@ Deno.serve(async (req) => {
     const payload: OrderStatusPayload = await req.json();
     console.log('Notificação de status:', payload);
 
-    // Get webhook URL from environment variable
-    const webhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
-    if (!webhookUrl) {
-      throw new Error('N8N_WEBHOOK_URL not configured');
+    // MODIFIQUE A URL ABAIXO CONFORME NECESSÁRIO
+    const webhookUrl = 'https://seu-webhook-n8n.com/webhook/status';
+    
+    if (!webhookUrl || webhookUrl === 'https://seu-webhook-n8n.com/webhook/status') {
+      throw new Error('Webhook URL não configurada. Modifique o arquivo supabase/functions/notify-order-status/index.ts');
     }
     
     const webhookPayload = {
