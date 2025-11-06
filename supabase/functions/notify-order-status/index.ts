@@ -24,9 +24,9 @@ Deno.serve(async (req) => {
     console.log('Notificação de status:', payload);
 
     // MODIFIQUE A URL ABAIXO CONFORME NECESSÁRIO
-    const webhookUrl = 'https://seu-webhook-n8n.com/webhook/status';
+    const webhookUrl = 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea';
     
-    if (!webhookUrl || webhookUrl === 'https://seu-webhook-n8n.com/webhook/status') {
+    if (!webhookUrl || webhookUrl === 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea') {
       throw new Error('Webhook URL não configurada. Modifique o arquivo supabase/functions/notify-order-status/index.ts');
     }
     
