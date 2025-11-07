@@ -60,17 +60,24 @@ export default function CustomizePizza() {
 
       if (error) throw error;
 
-      const mappedProducts: DBProduct[] = (data || []).map((p: any) => ({
-        id: p.id,
-        nome: p.nome || '',
-        descricao: p.descricao || '',
-        preco: Number(p.preco) || 0,
-        categoria: p.categoria || '',
-        imagem_url: p.imagem_url || '',
-        ingredientes: Array.isArray(p.ingredientes) ? p.ingredientes : [],
-        tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos : []
-      }));
+      const mappedProducts: DBProduct[] = (data || []).map((p: any) => {
+        const preco = Number(p.preco);
+        if (!preco || preco <= 0) {
+          console.warn(`Produto ${p.nome} sem preço válido:`, p.preco);
+        }
+        return {
+          id: p.id,
+          nome: p.nome || '',
+          descricao: p.descricao || '',
+          preco: preco || 0,
+          categoria: p.categoria || '',
+          imagem_url: p.imagem_url || '',
+          ingredientes: Array.isArray(p.ingredientes) ? p.ingredientes : [],
+          tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos : []
+        };
+      });
 
+      console.log('Pizzas carregadas com preços:', mappedProducts.map(p => ({ nome: p.nome, preco: p.preco })));
       setAvailableFlavors(mappedProducts);
     } catch (error) {
       console.error('Erro ao buscar pizzas:', error);
@@ -268,7 +275,9 @@ export default function CustomizePizza() {
                       />
                       <div className="flex-1">
                         <h4 className="font-bold">{product.nome}</h4>
-                        <p className="text-sm text-muted-foreground">R$ {product.preco.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Base: R$ {product.preco.toFixed(2)}
+                        </p>
                       </div>
                       {isSelected && (
                         <Check className="h-6 w-6 text-primary" />
