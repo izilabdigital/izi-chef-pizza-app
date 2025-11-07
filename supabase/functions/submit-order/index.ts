@@ -58,10 +58,10 @@ Deno.serve(async (req) => {
       await supabase.rpc('increment_cupom_uso', { cupom_code: orderData.cupom.toUpperCase() });
     }
 
-    // Send to webhook - MODIFIQUE A URL ABAIXO CONFORME NECESSÁRIO
+    // Send to webhook
     const webhookUrl = 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea';
     
-    if (webhookUrl && webhookUrl !== 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea') {
+    if (webhookUrl) {
       const webhookPayload = {
         id: insertedOrder.id,
         numero_pedido: orderData.numero_pedido || insertedOrder.numero_pedido,
