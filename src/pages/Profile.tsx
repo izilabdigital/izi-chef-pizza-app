@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Edit, Heart, LogOut, Plus, Trash2, Package, Star, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Edit, Heart, LogOut, Plus, Trash2, Package, Star, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCEP } from '@/hooks/useCEP';
@@ -64,6 +65,7 @@ const statusLabels: Record<string, string> = {
 export default function Profile() {
   const navigate = useNavigate();
   const { user, profile, logout, isAuthenticated } = useAuth();
+  const { addItem } = useCart();
   const { toast } = useToast();
   const { searchCEP, loading: cepLoading } = useCEP();
   const [enderecos, setEnderecos] = useState<Endereco[]>([]);
@@ -309,6 +311,30 @@ export default function Profile() {
     }
   };
 
+  const handleRefazerPedido = (pedido: Pedido) => {
+    // Adiciona todos os itens do pedido ao carrinho
+    pedido.itens?.forEach((item: any) => {
+      addItem({
+        id: item.id || Math.random().toString(),
+        name: item.name,
+        description: item.description || '',
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        category: item.category || '',
+        image: item.image
+      });
+    });
+
+    toast({
+      title: 'Itens adicionados ao carrinho',
+      description: 'Os itens do pedido foram adicionados ao carrinho'
+    });
+
+    // Navega para o carrinho
+    navigate('/cart');
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -515,6 +541,14 @@ export default function Profile() {
                           })}
                         >
                           Acompanhar
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          className="flex-1"
+                          onClick={() => handleRefazerPedido(pedido)}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Refazer
                         </Button>
                         {(pedido.status === 'pendente' || pedido.status === 'preparando') && (
                           <Button
