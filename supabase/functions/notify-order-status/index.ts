@@ -23,11 +23,11 @@ Deno.serve(async (req) => {
     const payload: OrderStatusPayload = await req.json();
     console.log('Notificação de status:', payload);
 
-    // MODIFIQUE A URL ABAIXO CONFORME NECESSÁRIO
+    // Webhook URL configurada
     const webhookUrl = 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea';
     
-    if (!webhookUrl || webhookUrl === 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea') {
-      throw new Error('Webhook URL não configurada. Modifique o arquivo supabase/functions/notify-order-status/index.ts');
+    if (!webhookUrl) {
+      throw new Error('Webhook URL não configurada');
     }
     
     const webhookPayload = {
