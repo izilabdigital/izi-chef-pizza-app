@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     console.log('Notificação de status:', payload);
 
     // Webhook URL configurada
-    const webhookUrl = 'https://n8n-n8n.pmmdpz.easypanel.host/webhook-test/9d7f629b-320c-41bb-9d1b-d4aafb704eea';
+    const webhookUrl = 'https://n8n-n8n.pmmdpz.easypanel.host/webhook/9d7f629b-320c-41bb-9d1b-d4aafb704eea';
     
     if (!webhookUrl) {
       throw new Error('Webhook URL não configurada');
